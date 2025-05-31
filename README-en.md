@@ -1,8 +1,14 @@
 # CountEasy
 
+> **⚠️ IMPORTANT NOTE ⚠️**  
+> This application is currently available in Chinese only. The user interface does not have an English language option yet.  
+> If you need English language support, please submit an issue on our GitHub page.
+
 ## Project Overview
 
 CountEasy is a weighing recording and counting tool designed specifically for warehouse and inventory staff. Through its clean interface and convenient operations, it helps users quickly and accurately record item weights and quantities, improving work efficiency.
+
+This project was developed using Cursor IDE with AI, Android 7.0+ supported.
 
 ## Main Features
 
@@ -24,6 +30,10 @@ CountEasy is a weighing recording and counting tool designed specifically for wa
    - Easily switch between and modify records
    - Automatically save all data
 
+## Technical Implementation
+
+This project was built with native Android development and leveraged Cursor IDE for intelligent code completion, real-time error detection, and optimization suggestions, ensuring high performance and stability of the application.
+
 ## Usage Instructions
 
 ### Counter Mode
@@ -39,8 +49,4 @@ CountEasy is a weighing recording and counting tool designed specifically for wa
 2. Use the numeric keypad to input the current item's weight
 3. Click the "Next" button to save the current record and move to the next one
 4. Click the "Previous" button to return and modify previous records
-5. The top of the interface will display the total weight and item count in real-time
-
-## Note
-
-This project currently doesn't have an English language version in the application. If you need English language support, please submit an issue on our GitHub page. 
+5. The top of the interface will display the total weight and item count in real-time 
