@@ -1,5 +1,10 @@
 # CountEasy 易盘
 
+> **⚠️ IMPORTANT NOTE ⚠️**  
+> We also have a readme in English!
+> This application is currently available in Chinese only. The user interface does not have an English language option yet.  
+> If you need English language support, please submit an issue on our GitHub page.
+
 ## 项目介绍
 
 易盘是一款专为仓储行业现场工作人员设计的称重记录和计数工具。它通过简洁的界面和便捷的操作方式，帮助用户快速准确地记录物品重量和数量，提高工作效率。
