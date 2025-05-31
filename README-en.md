@@ -30,10 +30,6 @@ This project was developed using Cursor IDE with AI, Android 7.0+ supported.
    - Easily switch between and modify records
    - Automatically save all data
 
-## Technical Implementation
-
-This project was built with native Android development and leveraged Cursor IDE for intelligent code completion, real-time error detection, and optimization suggestions, ensuring high performance and stability of the application.
-
 ## Usage Instructions
 
 ### Counter Mode
