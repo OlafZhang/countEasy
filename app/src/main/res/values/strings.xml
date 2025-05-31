@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">易盘</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    
+    <!-- 导出功能相关 -->
+    <string name="export_button_description">导出数据</string>
+    <string name="export_permission_title">关于存储权限</string>
+    <string name="export_permission_message">导出数据可能需要存储权限，请允许应用访问您的存储空间。</string>
+    <string name="export_success">数据文件已保存到下载目录: %1$s</string>
+    <string name="export_failure">导出失败: %1$s</string>
+    <string name="export_permission_denied">无法导出数据，需要存储权限</string>
+    <string name="export_permission_manual">您需要在设置中手动授予应用存储权限才能导出数据</string>
+    <string name="permission_granted">已获得存储权限，可以导出数据</string>
+    <string name="permission_denied">未获得存储权限，导出功能可能受限</string>
+</resources>

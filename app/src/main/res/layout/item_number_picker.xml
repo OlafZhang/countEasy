@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tvWeight"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:padding="16dp"
+    android:textSize="20sp"
+    android:background="@drawable/item_number_picker_background"
+    android:textColor="#333333"
+    android:layout_margin="4dp" /> 

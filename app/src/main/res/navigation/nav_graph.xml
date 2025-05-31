@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/listFragment">
+
+    <fragment
+        android:id="@+id/listFragment"
+        android:name="org.olafzhang.counteasy.ui.list.ListFragment"
+        android:label="列表">
+        <action
+            android:id="@+id/action_list_to_task"
+            app:destination="@id/taskFragment" />
+        <action
+            android:id="@+id/action_list_to_taskDetail"
+            app:destination="@id/taskDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/taskFragment"
+        android:name="org.olafzhang.counteasy.ui.task.TaskFragment"
+        android:label="任务">
+        <argument
+            android:name="taskId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/counterFragment"
+        android:name="org.olafzhang.counteasy.ui.counter.CounterFragment"
+        android:label="计数器" />
+        
+    <fragment
+        android:id="@+id/taskDetailFragment"
+        android:name="org.olafzhang.counteasy.ui.list.TaskDetailFragment"
+        android:label="任务详情">
+        <argument
+            android:name="taskId"
+            app:argType="long" />
+    </fragment>
+
+    <action
+        android:id="@+id/global_action_to_task"
+        app:destination="@id/taskFragment" />
+
+</navigation> 

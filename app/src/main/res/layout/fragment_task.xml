@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 任务标题和信息区域 - 改为一行显示 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/taskInfoCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:contentPadding="12dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvTaskName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/tvSummary"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                app:layout_constraintWidth_percent="0.65"
+                tools:text="任务名称" />
+
+            <TextView
+                android:id="@+id/tvSummary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textSize="14sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tvTaskName"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="1000.00kg (5项)" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 当前输入显示区域 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/currentInputCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="8dp"
+        app:cardBackgroundColor="#E8F5E9"
+        app:cardElevation="4dp"
+        app:contentPadding="6dp"
+        app:layout_constraintTop_toBottomOf="@id/taskInfoCard"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/tvCurrentInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#2E7D32"
+            tools:text="123.45kg" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- 三元素数据展示区域（替代原列表） -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/dataDisplayCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:layout_constraintTop_toBottomOf="@id/currentInputCard"
+        app:layout_constraintBottom_toTopOf="@id/keyboardLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <!-- 上一个数据 -->
+            <LinearLayout
+                android:id="@+id/prevDataContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tvPrevWeight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="#757575"
+                    tools:text="85.5kg" />
+
+                <TextView
+                    android:id="@+id/tvPrevIndex"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#9E9E9E"
+                    tools:text="#1" />
+            </LinearLayout>
+
+            <!-- 当前数据 -->
+            <LinearLayout
+                android:id="@+id/currentDataContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.2"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tvCurrentWeight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#212121"
+                    tools:text="100.0kg" />
+
+                <TextView
+                    android:id="@+id/tvCurrentIndex"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="#616161"
+                    tools:text="#2" />
+            </LinearLayout>
+
+            <!-- 下一个数据 -->
+            <LinearLayout
+                android:id="@+id/nextDataContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tvNextWeight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="#757575"
+                    tools:text="120.75kg" />
+
+                <TextView
+                    android:id="@+id/tvNextIndex"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#9E9E9E"
+                    tools:text="#3" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 隐藏的原列表视图 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/dataListCard"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvItemList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- 数字键盘区域 - 调整间距 -->
+    <LinearLayout
+        android:id="@+id/keyboardLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="10dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <Button
+                android:id="@+id/btn1"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="1" />
+
+            <Button
+                android:id="@+id/btn2"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="2" />
+
+            <Button
+                android:id="@+id/btn3"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="3" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <Button
+                android:id="@+id/btn4"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="4" />
+
+            <Button
+                android:id="@+id/btn5"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="5" />
+
+            <Button
+                android:id="@+id/btn6"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="6" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <Button
+                android:id="@+id/btn7"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="7" />
+
+            <Button
+                android:id="@+id/btn8"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="8" />
+
+            <Button
+                android:id="@+id/btn9"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="9" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <Button
+                android:id="@+id/btnDot"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="." />
+
+            <Button
+                android:id="@+id/btn0"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="0" />
+
+            <Button
+                android:id="@+id/btnBackspace"
+                style="@style/NumberButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="←" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnPrev"
+                style="@style/NavigationButton"
+                android:layout_marginHorizontal="2dp"
+                android:text="↑" />
+
+            <Button
+                android:id="@+id/btnNext"
+                style="@style/NavigationButton"
+                android:layout_marginHorizontal="2dp"
+                android:backgroundTint="#FFC107"
+                android:text="↓" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 隐藏的NumberPickerView，用于保持现有代码兼容 -->
+    <org.olafzhang.counteasy.ui.task.NumberPickerView
+        android:id="@+id/numberPickerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout> 
