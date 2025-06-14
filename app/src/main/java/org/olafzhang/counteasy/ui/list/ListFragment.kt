@@ -23,6 +23,7 @@ import org.olafzhang.counteasy.utils.TtsManager
 import androidx.appcompat.app.AlertDialog
 import android.widget.ListView
 import androidx.core.content.ContextCompat
+import android.content.Context
 
 class ListFragment : Fragment() {
     private lateinit var taskDao: TaskDao
@@ -328,12 +329,18 @@ class ListFragment : Fragment() {
         val spinnerAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, units)
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         unitSpinner?.adapter = spinnerAdapter
+        
+        // 读取用户设置的默认单位
+        val prefs = requireContext().getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val defaultUnitPosition = prefs.getInt("default_unit", 1) // 默认为克
+        unitSpinner?.setSelection(defaultUnitPosition)
 
         // 设置小数点位选择器
         numberPicker?.apply {
             minValue = 0
             maxValue = 5
-            value = 2  // 默认2位小数
+            // 读取用户设置的默认小数位数
+            value = prefs.getInt("default_decimal", 2)  // 默认2位小数
         }
         
         // 设置小数点位提示信息

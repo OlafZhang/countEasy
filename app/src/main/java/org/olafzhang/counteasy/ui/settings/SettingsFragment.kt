@@ -65,7 +65,7 @@ class SettingsFragment : Fragment() {
         val prefs = requireContext().getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         
         // 加载默认单位设置
-        val defaultUnitPosition = prefs.getInt("default_unit", 0) // 0 = 千克
+        val defaultUnitPosition = prefs.getInt("default_unit", 1) // 1 = 克 (修改默认值)
         spinnerDefaultUnit.setSelection(defaultUnitPosition)
         
         // 加载默认小数位设置

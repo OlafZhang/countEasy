@@ -115,10 +115,23 @@ class MainActivity : AppCompatActivity() {
                         navController.navigate(R.id.global_action_to_task, args)
                     } else {
                         // 创建一个默认任务
+                        // 读取用户设置的默认单位和小数位数
+                        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+                        val defaultUnitPosition = prefs.getInt("default_unit", 1) // 默认为克
+                        val defaultDecimalPlaces = prefs.getInt("default_decimal", 2) // 默认2位小数
+                        
+                        // 根据默认单位位置设置实际单位
+                        val units = arrayOf("千克", "克", "吨")
+                        val defaultUnit = if (defaultUnitPosition >= 0 && defaultUnitPosition < units.size) {
+                            units[defaultUnitPosition]
+                        } else {
+                            "千克"
+                        }
+                        
                         val defaultTask = Task(
                             name = "默认任务",
-                            unit = "千克",
-                            decimalPlaces = 2,
+                            unit = defaultUnit,
+                            decimalPlaces = defaultDecimalPlaces,
                             status = Task.STATUS_IN_PROGRESS
                         )
                         val taskId = taskDao.insertTask(defaultTask)
