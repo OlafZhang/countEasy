@@ -35,9 +35,15 @@ class TaskAdapter(
         fun bind(task: Task) {
             tvTaskName.text = task.name
             
+            // 添加日志输出
+            android.util.Log.d("TaskAdapter", "Binding task: ${task.id}, ${task.name}")
+            
             // 获取任务总重量和条目数
             val totalWeight = taskDao.getTaskTotalWeight(task.id)
             val itemCount = taskDao.getTaskItemCount(task.id)
+            
+            // 添加日志输出
+            android.util.Log.d("TaskAdapter", "Task ${task.id}: totalWeight=$totalWeight, itemCount=$itemCount")
             
             // 格式化总重量，使用任务设定的小数点位数
             val formattedWeight = NumberFormatter.formatNumber(totalWeight, task.decimalPlaces)

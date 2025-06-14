@@ -28,8 +28,10 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -44,11 +46,12 @@
                 android:layout_height="wrap_content"
                 android:gravity="end"
                 android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/tvTaskName"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:text="1000.00kg (5项)" />
+                tools:text="1000.00kg\n5项" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
@@ -284,6 +287,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/bottomRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -292,19 +296,19 @@
             <Button
                 android:id="@+id/btnDot"
                 style="@style/NumberButton"
-                android:layout_marginHorizontal="2dp"
+                android:layout_marginHorizontal="@dimen/button_margin_horizontal"
                 android:text="." />
 
             <Button
                 android:id="@+id/btn0"
                 style="@style/NumberButton"
-                android:layout_marginHorizontal="2dp"
+                android:layout_marginHorizontal="@dimen/button_margin_horizontal"
                 android:text="0" />
 
             <Button
                 android:id="@+id/btnBackspace"
                 style="@style/NumberButton"
-                android:layout_marginHorizontal="2dp"
+                android:layout_marginHorizontal="@dimen/button_margin_horizontal"
                 android:text="←" />
 
         </LinearLayout>

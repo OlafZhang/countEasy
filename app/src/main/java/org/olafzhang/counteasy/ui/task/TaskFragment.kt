@@ -1,11 +1,21 @@
 package org.olafzhang.counteasy.ui.task
 
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.GestureDetector
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,6 +26,7 @@ import org.olafzhang.counteasy.data.Task
 import org.olafzhang.counteasy.data.TaskDao
 import org.olafzhang.counteasy.utils.NumberFormatter
 import org.olafzhang.counteasy.utils.TtsManager
+import android.widget.Toast
 
 class TaskFragment : Fragment() {
     private lateinit var taskDao: TaskDao
@@ -25,6 +36,7 @@ class TaskFragment : Fragment() {
     private var currentInput = ""
     private var items = mutableListOf<Item>()
     private lateinit var itemAdapter: ItemAdapter
+    private lateinit var vibrator: Vibrator
 
     private lateinit var tvTaskName: TextView
     private lateinit var tvSummary: TextView
@@ -40,6 +52,7 @@ class TaskFragment : Fragment() {
     private lateinit var tvNextWeight: TextView
     private lateinit var tvNextIndex: TextView
     
+    private lateinit var btn0: Button
     private lateinit var btn1: Button
     private lateinit var btn2: Button
     private lateinit var btn3: Button
@@ -49,11 +62,14 @@ class TaskFragment : Fragment() {
     private lateinit var btn7: Button
     private lateinit var btn8: Button
     private lateinit var btn9: Button
-    private lateinit var btn0: Button
     private lateinit var btnDot: Button
     private lateinit var btnBackspace: Button
     private lateinit var btnPrev: Button
     private lateinit var btnNext: Button
+    
+    // 布局相关变量
+    private var isKeyboardLayoutAsc: Boolean = false  // 默认倒序
+    private var isZeroCenter: Boolean = true
 
     private val args: TaskFragmentArgs by navArgs()
 
@@ -70,6 +86,15 @@ class TaskFragment : Fragment() {
 
         taskDao = TaskDao(requireContext())
         ttsManager = TtsManager.getInstance(requireContext())
+        
+        // 初始化振动器
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = requireContext().getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
 
         task = taskDao.getTask(args.taskId) ?: run {
             requireActivity().onBackPressed()
@@ -78,6 +103,14 @@ class TaskFragment : Fragment() {
 
         initViews(view)
         loadItems()
+        
+        // 检查是否需要跳转到最后一个条目
+        if (args.goToLast && items.isNotEmpty()) {
+            currentPosition = items.size - 1
+            numberPickerView.setCurrentPosition(currentPosition)
+            loadInputFromDb()
+        }
+        
         setupItemsList()
         setupKeyboard(view)
         updateTaskInfo() 
@@ -99,6 +132,11 @@ class TaskFragment : Fragment() {
         tvNextWeight = view.findViewById(R.id.tvNextWeight)
         tvNextIndex = view.findViewById(R.id.tvNextIndex)
         
+        btnPrev = view.findViewById(R.id.btnPrev)
+        btnNext = view.findViewById(R.id.btnNext)
+        
+        // 初始化键盘按钮
+        btn0 = view.findViewById(R.id.btn0)
         btn1 = view.findViewById(R.id.btn1)
         btn2 = view.findViewById(R.id.btn2)
         btn3 = view.findViewById(R.id.btn3)
@@ -108,13 +146,12 @@ class TaskFragment : Fragment() {
         btn7 = view.findViewById(R.id.btn7)
         btn8 = view.findViewById(R.id.btn8)
         btn9 = view.findViewById(R.id.btn9)
-        btn0 = view.findViewById(R.id.btn0)
         btnDot = view.findViewById(R.id.btnDot)
         btnBackspace = view.findViewById(R.id.btnBackspace)
-        btnPrev = view.findViewById(R.id.btnPrev)
-        btnNext = view.findViewById(R.id.btnNext)
-
-        tvTaskName.text = task.name
+        
+        // 加载设置并应用键盘布局
+        loadKeyboardSettings()
+        applyKeyboardLayout()
     }
 
     private fun setupItemsList() {
@@ -179,23 +216,56 @@ class TaskFragment : Fragment() {
             true // 返回true表示事件已处理
         }
         
+        // 为上下按钮添加普通点击事件
         btnPrev.setOnClickListener { onPrevClick() }
         btnNext.setOnClickListener { onNextClick() }
+        
+        // 为上下按钮添加长按事件 - 使用标准Android长按
+        btnPrev.setOnLongClickListener {
+            onPrevLongClick()
+            true // 返回true表示事件已处理
+        }
+        
+        btnNext.setOnLongClickListener {
+            onNextLongClick()
+            true // 返回true表示事件已处理
+        }
     }
 
     private fun onNumberClick(number: Int) {
+        // 触发振动反馈
+        performHapticFeedback()
+        
         if (currentInput.length >= 10) return
+        
+        // 检查当前输入是否是需要清空的情况
+        val shouldClear = when {
+            currentInput.isEmpty() -> false // 空的直接输入
+            currentInput == "0" -> true // 只有0时需要清空
+            task.decimalPlaces > 0 && currentInput.matches(Regex("0\\.0{${task.decimalPlaces}}")) -> true // 0.00...（占满小数位）
+            else -> false
+        }
+        
+        if (shouldClear && number != 0) {
+            currentInput = "" // 清空当前输入
+        }
+        
+        // 检查小数位数限制
         if (currentInput.contains(".") && 
             currentInput.substringAfter(".").length >= task.decimalPlaces && task.decimalPlaces > 0) return
-        if (currentInput == "0" && number == 0 && task.decimalPlaces == 0) return // 防止输入多个0
-        if (currentInput == "0" && number != 0 && !currentInput.contains(".")) currentInput = "" // 如果当前是0，输入非0数字则替换0
-
+        
+        // 防止输入多个0
+        if (currentInput == "0" && number == 0 && task.decimalPlaces == 0) return
+        
         currentInput += number
         updateCurrentInputTextView()
         ttsManager.speak(number.toString())
     }
 
     private fun onDotClick() {
+        // 触发振动反馈
+        performHapticFeedback()
+        
         if (task.decimalPlaces == 0) return // 如果不允许小数，则不处理
         if (currentInput.contains(".")) return
         if (currentInput.isEmpty()) currentInput = "0"
@@ -205,6 +275,9 @@ class TaskFragment : Fragment() {
     }
 
     private fun onBackspaceClick() {
+        // 触发振动反馈
+        performHapticFeedback()
+        
         if (currentInput.isNotEmpty()) {
             currentInput = currentInput.dropLast(1)
             updateCurrentInputTextView()
@@ -228,6 +301,9 @@ class TaskFragment : Fragment() {
     }
 
     private fun onPrevClick() {
+        // 触发振动反馈
+        performHapticFeedback()
+        
         if (currentPosition > 0) {
             // 保存当前输入
             if (currentInput.isNotEmpty()) {
@@ -249,6 +325,9 @@ class TaskFragment : Fragment() {
     }
 
     private fun onNextClick() {
+        // 触发振动反馈
+        performHapticFeedback()
+        
         // 检查当前输入是否为空或0
         val weight = currentInput.toDoubleOrNull() ?: 0.0
         if (weight <= 0.0) {
@@ -396,7 +475,9 @@ class TaskFragment : Fragment() {
     
     // 添加更新任务信息的方法，但不计算总计
     private fun updateTaskInfo() {
-        tvTaskName.text = task.name
+        // 处理任务名称，如果超过12个字符则截断
+        val taskName = task.name
+        tvTaskName.text = taskName
         updateSummary() // 现在改为同时更新总计
     }
 
@@ -407,7 +488,7 @@ class TaskFragment : Fragment() {
         val itemCount = validItems.size
         
         val formattedWeight = NumberFormatter.formatNumber(totalWeight, task.decimalPlaces)
-        tvSummary.text = "$formattedWeight${task.unit} (${itemCount}项)"
+        tvSummary.text = "$formattedWeight${task.unit}\n${itemCount}项"
     }
 
     override fun onPause() {
@@ -420,5 +501,170 @@ class TaskFragment : Fragment() {
         super.onDestroy()
         saveCurrentInputToDb() // 保存当前输入
         updateSummary() // 确保销毁页面前更新总计
+    }
+
+    // 长按上按钮，快速跳转到第一个条目
+    private fun onPrevLongClick() {
+        // 添加日志输出
+        android.util.Log.d("TaskFragment", "onPrevLongClick called, currentPosition=$currentPosition, items.size=${items.size}")
+        
+        if (currentPosition > 0) {
+            // 提供更强的振动反馈，表示长按被触发
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(50)
+            }
+            
+            // 保存当前输入
+            if (currentInput.isNotEmpty()) {
+                saveCurrentInputToDb()
+            }
+            
+            // 直接跳转到第一个条目
+            currentPosition = 0
+            
+            // 加载新位置的数据
+            loadInputFromDb()
+            
+            numberPickerView.setCurrentPosition(currentPosition)
+            numberPickerView.scrollToPosition(currentPosition)
+            updateTripleDataDisplay()
+            ttsManager.speak("首条")
+            updateSummary()
+        }
+    }
+    
+    // 长按下按钮，快速跳转到最后一个条目
+    private fun onNextLongClick() {
+        // 添加日志输出
+        android.util.Log.d("TaskFragment", "onNextLongClick called, currentPosition=$currentPosition, items.size=${items.size}")
+        
+        if (items.isNotEmpty() && currentPosition < items.size - 1) {
+            // 提供更强的振动反馈，表示长按被触发
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(50)
+            }
+            
+            // 保存当前输入
+            if (currentInput.isNotEmpty()) {
+                saveCurrentInputToDb()
+            }
+            
+            // 直接跳转到最后一个条目（不是新建）
+            currentPosition = items.size - 1
+            
+            // 加载新位置的数据
+            loadInputFromDb()
+            
+            numberPickerView.setCurrentPosition(currentPosition)
+            numberPickerView.scrollToPosition(currentPosition)
+            updateTripleDataDisplay()
+            ttsManager.speak("末条")
+            updateSummary()
+        }
+    }
+
+    // 执行振动反馈
+    private fun performHapticFeedback() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Android 8.0及以上使用VibrationEffect
+            vibrator.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            // 低版本Android使用旧API
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(20)
+        }
+    }
+
+    private fun loadKeyboardSettings() {
+        val prefs = requireContext().getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        
+        // 加载键盘布局设置，默认倒序
+        isKeyboardLayoutAsc = prefs.getBoolean("keyboard_layout_asc", false) // 默认倒序
+        
+        // 加载0的位置设置，默认0在中间
+        isZeroCenter = prefs.getBoolean("zero_center", true) // 默认0在中间
+    }
+    
+    private fun applyKeyboardLayout() {
+        val bottomRow = btnDot.parent as ViewGroup
+        
+        // 根据设置设置数字键盘布局（正序/倒序）
+        if (!isKeyboardLayoutAsc) {
+            // 倒序排列：从下到上是789, 456, 123
+            val row1 = btn1.parent as ViewGroup
+            val row2 = btn4.parent as ViewGroup
+            val row3 = btn7.parent as ViewGroup
+            
+            // 在添加视图前，先确保它们从原父视图中移除
+            // 第一行：7, 8, 9
+            if (btn7.parent != null) (btn7.parent as? ViewGroup)?.removeView(btn7)
+            if (btn8.parent != null) (btn8.parent as? ViewGroup)?.removeView(btn8)
+            if (btn9.parent != null) (btn9.parent as? ViewGroup)?.removeView(btn9)
+            
+            row1.removeAllViews()
+            row1.addView(btn7)
+            row1.addView(btn8)
+            row1.addView(btn9)
+            
+            // 第二行：4, 5, 6
+            if (btn4.parent != null) (btn4.parent as? ViewGroup)?.removeView(btn4)
+            if (btn5.parent != null) (btn5.parent as? ViewGroup)?.removeView(btn5)
+            if (btn6.parent != null) (btn6.parent as? ViewGroup)?.removeView(btn6)
+            
+            row2.removeAllViews()
+            row2.addView(btn4)
+            row2.addView(btn5)
+            row2.addView(btn6)
+            
+            // 第三行：1, 2, 3
+            if (btn1.parent != null) (btn1.parent as? ViewGroup)?.removeView(btn1)
+            if (btn2.parent != null) (btn2.parent as? ViewGroup)?.removeView(btn2)
+            if (btn3.parent != null) (btn3.parent as? ViewGroup)?.removeView(btn3)
+            
+            row3.removeAllViews()
+            row3.addView(btn1)
+            row3.addView(btn2)
+            row3.addView(btn3)
+        }
+        
+        // 应用退格键位置和0的位置，退格键固定在最左边
+        // 在添加视图前，先确保它们从原父视图中移除
+        if (btnBackspace.parent != null) (btnBackspace.parent as? ViewGroup)?.removeView(btnBackspace)
+        if (btn0.parent != null) (btn0.parent as? ViewGroup)?.removeView(btn0)
+        if (btnDot.parent != null) (btnDot.parent as? ViewGroup)?.removeView(btnDot)
+        
+        bottomRow.removeAllViews()
+        
+        // 退格键始终在左边
+        bottomRow.addView(btnBackspace)
+        
+        if (isZeroCenter) {
+            // 0在中间
+            bottomRow.addView(btn0)
+            bottomRow.addView(btnDot)
+        } else {
+            // 0在右边
+            bottomRow.addView(btnDot)
+            bottomRow.addView(btn0)
+        }
+        
+        // 更新每个按钮的布局参数，确保它们占据相同的空间
+        for (i in 0 until bottomRow.childCount) {
+            val child = bottomRow.getChildAt(i)
+            val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.0f)
+            params.setMargins(
+                resources.getDimensionPixelSize(R.dimen.button_margin_horizontal),
+                0,
+                resources.getDimensionPixelSize(R.dimen.button_margin_horizontal),
+                0
+            )
+            child.layoutParams = params
+        }
     }
 } 

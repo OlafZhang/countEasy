@@ -2,16 +2,21 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/listFragment"
-        android:icon="@android:drawable/ic_menu_sort_by_size"
-        android:title="列表" />
+        android:icon="@drawable/ic_list"
+        android:title="@string/title_list" />
 
     <item
         android:id="@+id/taskFragment"
-        android:icon="@android:drawable/ic_menu_edit"
-        android:title="任务" />
+        android:icon="@drawable/ic_task"
+        android:title="@string/title_task" />
 
     <item
         android:id="@+id/counterFragment"
-        android:icon="@android:drawable/ic_menu_add"
-        android:title="计数器" />
+        android:icon="@drawable/ic_counter"
+        android:title="@string/title_counter" />
+        
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/title_settings" />
 </menu> 

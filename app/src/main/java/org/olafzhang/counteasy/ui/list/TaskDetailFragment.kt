@@ -42,6 +42,7 @@ class TaskDetailFragment : Fragment() {
     private lateinit var tvSummary: TextView
     private lateinit var rvItemList: RecyclerView
     private lateinit var fabExport: FloatingActionButton
+    private lateinit var tvEmptyItems: TextView
     private lateinit var task: Task
     private var items = mutableListOf<Item>()
     
@@ -72,6 +73,7 @@ class TaskDetailFragment : Fragment() {
         tvSummary = view.findViewById(R.id.tvSummary)
         rvItemList = view.findViewById(R.id.rvItemList)
         fabExport = view.findViewById(R.id.fabExport)
+        tvEmptyItems = view.findViewById(R.id.tvEmptyItems)
         
         rvItemList.layoutManager = LinearLayoutManager(requireContext())
     }
@@ -206,6 +208,15 @@ class TaskDetailFragment : Fragment() {
     }
     
     private fun setupItemList() {
+        // 检查是否有条目
+        if (items.isEmpty()) {
+            rvItemList.visibility = View.GONE
+            tvEmptyItems.visibility = View.VISIBLE
+        } else {
+            rvItemList.visibility = View.VISIBLE
+            tvEmptyItems.visibility = View.GONE
+        }
+        
         val adapter = ItemAdapter(
             items = items,
             unit = task.unit,
@@ -286,10 +297,12 @@ class TaskDetailFragment : Fragment() {
     
     private fun showDeleteItemDialog(position: Int) {
         val item = items[position]
+        val itemNumber = position + 1
+        val formattedWeight = NumberFormatter.formatNumber(item.weight, task.decimalPlaces)
         
         AlertDialog.Builder(requireContext())
             .setTitle("删除数据")
-            .setMessage("确定要删除这条数据吗？")
+            .setMessage("确定要删除第${itemNumber}条数据吗？\n重量：$formattedWeight${task.unit}")
             .setPositiveButton("删除") { _, _ ->
                 // 从数据库删除
                 if (item.id > 0) {
@@ -304,6 +317,12 @@ class TaskDetailFragment : Fragment() {
                 rvItemList.adapter?.notifyItemRangeChanged(position, items.size - position)
                 updateSummary()
                 
+                // 检查是否还有条目
+                if (items.isEmpty()) {
+                    rvItemList.visibility = View.GONE
+                    tvEmptyItems.visibility = View.VISIBLE
+                }
+                
                 Toast.makeText(requireContext(), "数据已删除", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("取消", null)
@@ -317,6 +336,6 @@ class TaskDetailFragment : Fragment() {
         val itemCount = validItems.size
         
         val formattedWeight = NumberFormatter.formatNumber(totalWeight, task.decimalPlaces)
-        tvSummary.text = "$formattedWeight${task.unit} (${itemCount}项)"
+        tvSummary.text = "$formattedWeight${task.unit}\n${itemCount}项"
     }
 } 

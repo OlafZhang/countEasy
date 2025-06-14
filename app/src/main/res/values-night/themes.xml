@@ -1,14 +1,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.CountEasy" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.CountEasy" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/skyblue_200</item>
+        <item name="colorPrimary">@color/skyblue_500</item>
         <item name="colorPrimaryVariant">@color/skyblue_700</item>
-        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/skyblue_200</item>
-        <item name="colorSecondaryVariant">@color/skyblue_200</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSecondary">@color/skyblue_500</item>
+        <item name="colorSecondaryVariant">@color/skyblue_700</item>
+        <item name="colorOnSecondary">@color/white</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->

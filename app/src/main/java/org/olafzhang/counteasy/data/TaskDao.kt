@@ -34,6 +34,10 @@ class TaskDao(context: Context) {
         db.delete("items", "task_id = ?", arrayOf(taskId.toString()))
     }
 
+    fun clearTaskItems(taskId: Long) {
+        db.delete("items", "task_id = ?", arrayOf(taskId.toString()))
+    }
+
     fun getTask(taskId: Long): Task? {
         val cursor = db.query(
             "tasks",

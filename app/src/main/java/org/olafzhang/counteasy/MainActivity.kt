@@ -21,6 +21,7 @@ import org.olafzhang.counteasy.data.TaskDao
 class MainActivity : AppCompatActivity() {
     private lateinit var taskDao: TaskDao
     private lateinit var navController: NavController
+    private var lastSelectedTaskId: Long = -1L
     
     // 权限请求回调
     private val requestPermissionLauncher = registerForActivityResult(
@@ -49,6 +50,10 @@ class MainActivity : AppCompatActivity() {
         
         taskDao = TaskDao(this)
         
+        // 从SharedPreferences加载上次选择的任务ID
+        lastSelectedTaskId = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .getLong("last_selected_task_id", -1L)
+        
         // 正确获取NavController
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
@@ -58,6 +63,21 @@ class MainActivity : AppCompatActivity() {
         
         // 设置导航UI
         navView.setupWithNavController(navController)
+        
+        // 监听导航变化，保存当前任务ID
+        navController.addOnDestinationChangedListener { _, destination, arguments ->
+            if (destination.id == R.id.taskFragment) {
+                arguments?.getLong("taskId", -1L)?.let { taskId ->
+                    if (taskId != -1L) {
+                        lastSelectedTaskId = taskId
+                        // 保存到SharedPreferences
+                        getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit()
+                            .putLong("last_selected_task_id", taskId)
+                            .apply()
+                    }
+                }
+            }
+        }
         
         // 添加自定义导航处理
         navView.setOnItemSelectedListener { item ->
@@ -69,15 +89,26 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.taskFragment -> {
+                    // 检查当前是否已经在任务页面，如果是则不需要重新导航
+                    if (navController.currentDestination?.id == R.id.taskFragment) {
+                        return@setOnItemSelectedListener true
+                    }
+                    
                     // 检查是否有至少一个任务
                     val tasks = taskDao.getAllTasks()
                     if (tasks.isNotEmpty()) {
-                        // 导航到最新的任务，使用全局动作
-                        val task = tasks.first()
+                        // 使用上次选择的任务ID（如果有效）
+                        var taskToShow = if (lastSelectedTaskId != -1L) {
+                            // 确保该任务ID仍然存在
+                            taskDao.getTask(lastSelectedTaskId) ?: tasks.first()
+                        } else {
+                            tasks.first()
+                        }
                         
                         // 创建包含任务ID的参数
                         val args = Bundle().apply {
-                            putLong("taskId", task.id)
+                            putLong("taskId", taskToShow.id)
+                            putBoolean("goToLast", false) // 不跳转到最后一个条目
                         }
                         
                         // 使用全局导航动作
@@ -91,10 +122,17 @@ class MainActivity : AppCompatActivity() {
                             status = Task.STATUS_IN_PROGRESS
                         )
                         val taskId = taskDao.insertTask(defaultTask)
+                        lastSelectedTaskId = taskId
+                        
+                        // 保存到SharedPreferences
+                        getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit()
+                            .putLong("last_selected_task_id", taskId)
+                            .apply()
                         
                         // 创建包含任务ID的参数
                         val args = Bundle().apply {
                             putLong("taskId", taskId)
+                            putBoolean("goToLast", false) // 不跳转到最后一个条目
                         }
                         
                         // 使用全局导航动作
@@ -105,6 +143,12 @@ class MainActivity : AppCompatActivity() {
                 R.id.counterFragment -> {
                     if (navController.currentDestination?.id != R.id.counterFragment) {
                         navController.navigate(R.id.counterFragment)
+                    }
+                    true
+                }
+                R.id.settingsFragment -> {
+                    if (navController.currentDestination?.id != R.id.settingsFragment) {
+                        navController.navigate(R.id.settingsFragment)
                     }
                     true
                 }

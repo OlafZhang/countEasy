@@ -23,6 +23,10 @@
         <argument
             android:name="taskId"
             app:argType="long" />
+        <argument
+            android:name="goToLast"
+            app:argType="boolean"
+            android:defaultValue="false" />
     </fragment>
 
     <fragment
@@ -38,7 +42,13 @@
             android:name="taskId"
             app:argType="long" />
     </fragment>
-
+    
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="org.olafzhang.counteasy.ui.settings.SettingsFragment"
+        android:label="设置">
+    </fragment>
+    
     <action
         android:id="@+id/global_action_to_task"
         app:destination="@id/taskFragment" />

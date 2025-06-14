@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
@@ -19,11 +20,16 @@ import org.olafzhang.counteasy.R
 import org.olafzhang.counteasy.data.Task
 import org.olafzhang.counteasy.data.TaskDao
 import org.olafzhang.counteasy.utils.TtsManager
+import androidx.appcompat.app.AlertDialog
+import android.widget.ListView
+import androidx.core.content.ContextCompat
 
 class ListFragment : Fragment() {
     private lateinit var taskDao: TaskDao
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var ttsManager: TtsManager
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var tvEmptyList: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +47,8 @@ class ListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        recyclerView = view.findViewById(R.id.recyclerView)
+        tvEmptyList = view.findViewById(R.id.tvEmptyList)
         setupRecyclerView(view)
         setupFab(view)
     }
@@ -49,7 +57,7 @@ class ListFragment : Fragment() {
         taskAdapter = TaskAdapter(
             taskDao,
             onTaskClick = { task ->
-                val action = ListFragmentDirections.actionListToTask(task.id)
+                val action = ListFragmentDirections.actionListToTask(task.id, true)
                 findNavController().navigate(action)
             },
             onTaskLongClick = { task ->
@@ -57,7 +65,7 @@ class ListFragment : Fragment() {
             }
         )
 
-        view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerView).apply {
+        recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = taskAdapter
         }
@@ -72,23 +80,70 @@ class ListFragment : Fragment() {
     }
 
     private fun loadTasks() {
+        // 添加日志输出
+        android.util.Log.d("ListFragment", "loadTasks called")
+        
+        // 获取最新的任务列表
         val tasks = taskDao.getAllTasks()
+        
+        // 强制刷新适配器
+        taskAdapter.submitList(null)
         taskAdapter.submitList(tasks)
+        
+        // 控制空列表提示的显示
+        if (tasks.isEmpty()) {
+            recyclerView.visibility = View.GONE
+            tvEmptyList.visibility = View.VISIBLE
+        } else {
+            recyclerView.visibility = View.VISIBLE
+            tvEmptyList.visibility = View.GONE
+        }
+        
+        // 添加日志输出
+        android.util.Log.d("ListFragment", "Tasks loaded: ${tasks.size}")
     }
 
     private fun showTaskOptionsDialog(task: Task) {
-        val options = arrayOf("查看数据", "编辑任务", "删除任务")
+        val options = arrayOf("查看数据", "编辑任务", "清空任务", "删除任务")
         
-        MaterialAlertDialogBuilder(requireContext())
+        val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("任务操作")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> navigateToTaskDetail(task)
-                    1 -> showEditTaskDialog(task)
-                    2 -> showDeleteDialog(task)
+            .create()
+            
+        // 创建自定义ListView
+        val listView = ListView(requireContext())
+        listView.adapter = object : ArrayAdapter<String>(
+            requireContext(),
+            android.R.layout.simple_list_item_1,
+            options
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent)
+                val textView = view.findViewById<TextView>(android.R.id.text1)
+                
+                // 为删除和清空任务设置红色字体
+                if (position == 2 || position == 3) { // 清空任务和删除任务的位置
+                    textView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_light))
+                } else {
+                    textView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
                 }
+                
+                return view
             }
-            .show()
+        }
+        
+        listView.setOnItemClickListener { _, _, position, _ ->
+            when (position) {
+                0 -> navigateToTaskDetail(task)
+                1 -> showEditTaskDialog(task)
+                2 -> showClearDialog(task)  // 清空任务调整到前面
+                3 -> showDeleteDialog(task) // 删除任务调整到最后
+            }
+            dialog.dismiss()
+        }
+        
+        dialog.setView(listView)
+        dialog.show()
     }
 
     private fun navigateToTaskDetail(task: Task) {
@@ -129,7 +184,7 @@ class ListFragment : Fragment() {
         // 设置小数点位选择器 - 编辑时禁用
         numberPicker?.apply {
             minValue = 0
-            maxValue = 3
+            maxValue = 5
             value = task.decimalPlaces
             isEnabled = false // 禁用小数点位选择器
         }
@@ -167,17 +222,90 @@ class ListFragment : Fragment() {
         }
     }
 
+    private fun showClearDialog(task: Task) {
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle("清空任务")
+            .setMessage("确定要清空这个任务的所有数据吗？\n此操作不可撤销！")
+            .setPositiveButton("确定", null)  // 先设为null，后面手动处理
+            .setNegativeButton("取消", null)
+            .create()
+            
+        dialog.show()
+        
+        // 获取确定按钮并设置倒计时
+        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        positiveButton.isEnabled = false
+        positiveButton.text = "确定 (3)"
+        
+        val countDownHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        var secondsLeft = 3
+        
+        val countDownRunnable = object : Runnable {
+            override fun run() {
+                secondsLeft--
+                if (secondsLeft > 0) {
+                    positiveButton.text = "确定 ($secondsLeft)"
+                    countDownHandler.postDelayed(this, 1000)
+                } else {
+                    positiveButton.text = "确定"
+                    positiveButton.isEnabled = true
+                }
+            }
+        }
+        
+        countDownHandler.postDelayed(countDownRunnable, 1000)
+        
+        // 设置确定按钮的点击事件
+        positiveButton.setOnClickListener {
+            // 清空任务的所有数据，但保留任务本身
+            taskDao.clearTaskItems(task.id)
+            // 刷新列表显示
+            loadTasks()
+            Toast.makeText(requireContext(), "任务数据已清空", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+    }
+
     private fun showDeleteDialog(task: Task) {
-        MaterialAlertDialogBuilder(requireContext())
+        val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("删除任务")
             .setMessage("确定要删除这个任务吗？")
-            .setPositiveButton("确定") { _, _ ->
-                taskDao.deleteTask(task.id)
-                loadTasks()
-                Toast.makeText(requireContext(), "任务已删除", Toast.LENGTH_SHORT).show()
-            }
+            .setPositiveButton("确定", null)  // 先设为null，后面手动处理
             .setNegativeButton("取消", null)
-            .show()
+            .create()
+            
+        dialog.show()
+        
+        // 获取确定按钮并设置倒计时
+        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        positiveButton.isEnabled = false
+        positiveButton.text = "确定 (3)"
+        
+        val countDownHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        var secondsLeft = 3
+        
+        val countDownRunnable = object : Runnable {
+            override fun run() {
+                secondsLeft--
+                if (secondsLeft > 0) {
+                    positiveButton.text = "确定 ($secondsLeft)"
+                    countDownHandler.postDelayed(this, 1000)
+                } else {
+                    positiveButton.text = "确定"
+                    positiveButton.isEnabled = true
+                }
+            }
+        }
+        
+        countDownHandler.postDelayed(countDownRunnable, 1000)
+        
+        // 设置确定按钮的点击事件
+        positiveButton.setOnClickListener {
+            taskDao.deleteTask(task.id)
+            loadTasks()
+            Toast.makeText(requireContext(), "任务已删除", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
     }
 
     private fun showAddTaskDialog() {
@@ -204,7 +332,7 @@ class ListFragment : Fragment() {
         // 设置小数点位选择器
         numberPicker?.apply {
             minValue = 0
-            maxValue = 3
+            maxValue = 5
             value = 2  // 默认2位小数
         }
         
@@ -212,10 +340,13 @@ class ListFragment : Fragment() {
         tvDecimalPlacesInfo?.text = "小数点位数\n(创建后不可修改)"
 
         dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            val taskName = taskNameEditText?.text?.toString()
+            var taskName = taskNameEditText?.text?.toString()
+            
+            // 如果任务名为空，生成临时任务名
             if (taskName.isNullOrBlank()) {
-                taskNameEditText?.error = "请输入任务名称"
-                return@setOnClickListener
+                val dateFormat = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.getDefault())
+                val timestamp = dateFormat.format(java.util.Date())
+                taskName = "临时任务$timestamp"
             }
 
             // 检查任务名称是否重复
@@ -239,5 +370,11 @@ class ListFragment : Fragment() {
             Toast.makeText(requireContext(), "任务已创建", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 每次Fragment恢复可见状态时刷新列表
+        loadTasks()
     }
 } 
